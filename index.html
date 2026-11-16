@@ -235,7 +235,7 @@ function submit(){const t=$("gi").value.trim();$("gi").value="";if(t&&R)R.emit("
 $("gi").onkeydown=e=>{if(e.key==="Enter")submit()};
 function makeNet(code,create,pres0){return new Promise((resolve,reject)=>{
   const HID="garabatea-"+code,H={},subs=[],conns={};let list={},me=null,hc=null,done=false,prev=new Set();hostPeer=HID;
-  const peer=new Peer(create?HID:undefined);
+  const peer=new Peer(create?HID:undefined,{config:{iceServers:[{urls:"stun:stun.l.google.com:19302"},{urls:"stun:global.stun.twilio.com:3478"},{urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turn:openrelay.metered.ca:443?transport=tcp"],username:"openrelayproject",credential:"openrelayproject"}]}});
   const fire=(t,d,from)=>(H[t]||[]).forEach(f=>f({topic:t,data:d,peer:from,isMe:from===me,sameTab:from===me}));
   const plist=()=>Object.keys(list).map(id=>({peer:id,isMe:id===me,sameTab:id===me,presence:list[id]}));
   const notify=()=>{const pl=plist(),joined=pl.filter(p=>!prev.has(p.peer));prev=new Set(pl.map(p=>p.peer));subs.forEach(f=>f({peers:pl,joined,left:[]}))};
@@ -248,7 +248,7 @@ function makeNet(code,create,pres0){return new Promise((resolve,reject)=>{
   peer.on("open",id=>{me=id;list[me]=pres0;
     if(create){done=true;resolve(api);notify();return}
     hc=peer.connect(HID,{reliable:true,serialization:"json"});
-    const to=setTimeout(()=>{if(!done)reject("No se pudo conectar con la sala. Revisa el código o que el anfitrión ya la haya creado.")},12000);
+    const to=setTimeout(()=>{if(!done)reject("No se pudo conectar con la sala. Revisa el código o que el anfitrión ya la haya creado.")},25000);
     hc.on("open",()=>{hc.send({k:"hello",p:pres0});done=true;clearTimeout(to);resolve(api)});
     hc.on("data",m=>{if(m.k==="peers"){list=m.list;notify()}else if(m.k==="ev")fire(m.t,m.d,m.from)});
     hc.on("close",()=>say("⚠️ El anfitrión se ha desconectado. Recarga la página para crear otra sala.","cl"))});
